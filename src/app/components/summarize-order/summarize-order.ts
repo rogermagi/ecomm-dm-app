@@ -6,10 +6,15 @@ import { MatIcon } from '@angular/material/icon';
 
 @Component({
   selector: 'app-summarize-order',
-  imports: [ViewPanel,MatButton,MatIcon],
+  imports: [ViewPanel],
   template: ` 
   <div appViewPanel>
     <h2 class="text-2xl font-bold mb-4">Order Summary</h2>
+
+    <div class="space-y-2 pb-4">
+      <ng-content select="[checkoutItems]" />
+    </div>
+
     <div class="space-y-3 text-lg pt-4 border-t">
       <div class="flex justify-between">
         <span>Subtotal</span>
@@ -24,12 +29,7 @@ import { MatIcon } from '@angular/material/icon';
         <span>\$ {{ total() }}</span>
       </div>
     </div>
-    <div class="flex flex-col items-center mt-[10px]">
-      <button matButton = "filled" class="flex ml_auto gap-2">
-         Proceed to Checkout
-         <mat-icon>arrow_right</mat-icon>
-      </button>
-    </div>
+    <ng-content select="[actionButtons]"/>
   </div>
   `,
   styles: ``,
@@ -43,5 +43,5 @@ export class SummarizeOrder {
 
   tax = computed(() => Math.round(0.13 * this.subtotal()));
 
-  total = computed(() => this.subtotal() - this.tax());
+  total = computed(() => this.subtotal() + this.tax());
 }

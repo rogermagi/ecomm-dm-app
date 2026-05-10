@@ -4,12 +4,22 @@ import { CartItem } from "./models/cart-item";
 import {patchState, signalMethod, signalStore, withComputed, withMethods, withState} from "@ngrx/signals"
 import {produce} from "immer";
 import { Toaster } from "./services/toaster";
+import { MatDialog } from "@angular/material/dialog";
+import { Dialog } from "@angular/cdk/dialog";
+import { SignInDialog } from "./components/sign-in-dialog/sign-in-dialog";
+import { SignInParams, SignUpParams } from "./models/user";
+import { User } from "./models/user";
+import { Router } from "@angular/router";
+import { Order } from "./models/order";
+import { withStorageSync} from '@angular-architects/ngrx-toolkit'
 
 export type EcommerceState = {
     products: Product[];
     category: string;
     wishlistItems: Product[];
     cartItems: CartItem[];
+    user: User | undefined;
+    loading: boolean;
 }
 
 export const EcommerceStore = signalStore(
@@ -198,7 +208,10 @@ export const EcommerceStore = signalStore(
         category: "all",
         wishlistItems: [],
         cartItems: [],
+        user: undefined,
+        loading: false,
     } as EcommerceState),
+    withStorageSync({ key: 'ecommerce-store', select: ({ wishlistItems, cartItems, user }) => ({ wishlistItems, cartItems, user})}),
     withComputed(({category, products, wishlistItems, cartItems}) => ({
         filteredProducts: computed(()=> {
             if(category()==='all') return products();
@@ -208,7 +221,7 @@ export const EcommerceStore = signalStore(
         wishlistCount: computed(() => wishlistItems().length),
         cartCount: computed(() => cartItems().reduce((acc,item) => acc + item.quantity, 0)),
     })),
-    withMethods((store, toaster=inject(Toaster),) => ({
+    withMethods((store, toaster=inject(Toaster), matDialog = inject(MatDialog), router = inject(Router)) => ({
         setCategory: signalMethod<string>((category: string) => {
             patchState(store, { category });
         }),
@@ -274,6 +287,75 @@ export const EcommerceStore = signalStore(
             patchState(store, {
                 cartItems: store.cartItems().filter(c => c.product.id !== product.id),
             });
+        },
+        proceedToCheckout: () => {
+            if(!store.user()) {
+                matDialog.open(SignInDialog, {
+                    disableClose: true,
+                    data: {
+                        checkout: true
+                    }
+                });   
+                return;         
+            }
+            router.navigate(['/checkout']);
+            
+        },
+        placeOrder: async () => {
+            patchState(store, {loading:true});
+
+            const user = store.user();
+
+            if(!user){
+                toaster.error('Please login before placing order');
+                patchState(store, {loading:false});
+                return;
+            }
+
+            const order: Order = {
+                    id: crypto.randomUUID(),
+                    userId: user.id,
+                    total: Math.round(store.cartItems().reduce((acc,curr)=>(acc + curr.quantity * curr.product.price), 0)),
+                    items: store.cartItems(),
+                    paymentStatus: 'success',
+            };
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            patchState(store, { loading: false, cartItems:[] });
+            router.navigate(['order-success']);
+        },
+        signIn: ({email, password, checkout, dialogId}: SignInParams) => {
+            patchState(store, {
+                user: {
+                    id:'1',
+                    email,
+                    name: 'John Doe',
+                    imageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+                },
+            });
+            matDialog.getDialogById(dialogId)?.close();
+
+            if(checkout) {
+                router.navigate(['/checkout']);
+            }
+        },
+        signUp: ({email, password, name, checkout, dialogId}: SignUpParams) => {
+            patchState(store, {
+                user: {
+                    id:'1',
+                    email,
+                    name: 'John Doe',
+                    imageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+                },
+            });
+            matDialog.getDialogById(dialogId)?.close();
+
+            if(checkout) {
+                router.navigate(['/checkout']);
+            }
+        },
+        signOut: () => {
+            patchState(store, {user:undefined});
         }
     }))
 );
