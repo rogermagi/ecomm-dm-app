@@ -3,18 +3,24 @@ import { Product } from '../../models/product';
 import { MatAnchor, MatButton, MatIconButton } from "@angular/material/button";
 import { MatIcon } from '@angular/material/icon';
 import { EcommerceStore } from '../../ecommerce-store';
+import { RouterLink } from "@angular/router";
 
 @Component({
   selector: 'app-product-card',
-  imports: [MatAnchor, MatButton, MatIcon],
+  imports: [MatAnchor, MatButton, MatIcon, RouterLink],
   template: `         
-  <div class="relative bg-white cursor-pointer rounded-xl shadow-lg overflow-hidden flex flex-col h-full">
-          <img [src]="product().imageUrl" class="w-full h-[300px] object-cover rounded-t-xl">
+  <div class="relative bg-white cursor-pointer rounded-xl shadow-lg overflow-hidden flex flex-col h-full transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl">
 
+          <img 
+            [src]="product().imageUrl" 
+            class="w-full h-[300px] object-cover rounded-t-xl" 
+            [routerLink]="['/product',product().id]"
+            [style.view-transition-name]="'product-image-' + product().id";
+          />
           <ng-content/>
 
           <div class="p-5 flex flex-col flex-1">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2 leading-tight">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2 leading-tight" [routerLink]="['/product',product().id]">
               {{product().name}}
             </h3>
             <p class="text-sm text-gray-600 mb-4 flex-1 leading-relaxed">

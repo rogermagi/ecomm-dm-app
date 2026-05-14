@@ -8,8 +8,7 @@ import { MatIconButton } from '@angular/material/button';
   selector: 'app-toggle-wishlist-button',
   imports: [MatIcon, MatIconButton],
   template: ` 
-    <button 
-    class="!absolute z-10 top-3 right-3 !bg-white transition-all duration-200 hover:scale-110 hover:shadow-lg" 
+    <button     
     [class]="isInWishlist() ? '!text-red-500' : '!text-gray-400'"
     matIconButton 
     (click)="toggleWishlist(product())"
